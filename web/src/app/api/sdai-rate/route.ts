@@ -3,6 +3,7 @@ import { createPublicClient, http } from 'viem';
 import { gnosis } from 'viem/chains';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Current sDAI price-per-share + annualized rate, derived from the vault's own
 // history (no rate getter exists on-chain). Cached — the rate barely moves.

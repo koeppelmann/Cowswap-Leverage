@@ -199,11 +199,23 @@ export function SdaiTab({ tabs }: { tabs?: React.ReactNode }) {
     setFinBusy(t.uid);
     try {
       const deployed = parked[t.uid]?.deployed;
-      // resolve the salt that yields this Safe (new = per-transfer, legacy = 0)
-      const sn = predictGnosisSafe(t.owner as Address, BigInt(t.saltNonce)).toLowerCase() === t.gnosisSafe.toLowerCase() ? BigInt(t.saltNonce) : 0n;
-      const hash = deployed
-        ? await walletClient.sendTransaction({ account: address, chain: gnosis, to: CONVERT_MODULE as Address, data: convertCalldata(t.gnosisSafe as Address) })
-        : await walletClient.sendTransaction({ account: address, chain: gnosis, to: FINALIZE_HELPER as Address, data: finalizeCalldata(t.gnosisSetup as `0x${string}`, sn) });
+      let hash: `0x${string}`;
+      if (deployed) {
+        // Safe already exists → just convert; no salt needed.
+        hash = await walletClient.sendTransaction({ account: address, chain: gnosis, to: CONVERT_MODULE as Address, data: convertCalldata(t.gnosisSafe as Address) });
+      } else {
+        // Resolve the salt that actually derives this Safe (new = per-transfer,
+        // legacy = 0). VERIFY the match — never blindly fall back to 0, or we'd
+        // deploy a Safe at a different CREATE2 address than where the xDAI is
+        // parked and the convert would revert on an empty Safe, burning gas.
+        const target = t.gnosisSafe.toLowerCase();
+        const owner = t.owner as Address;
+        const sn = predictGnosisSafe(owner, BigInt(t.saltNonce)).toLowerCase() === target ? BigInt(t.saltNonce)
+          : predictGnosisSafe(owner, 0n).toLowerCase() === target ? 0n
+          : null;
+        if (sn === null) throw new Error('Cannot resolve the deterministic Safe salt for this transfer — refusing to finalize (would deploy at the wrong address).');
+        hash = await walletClient.sendTransaction({ account: address, chain: gnosis, to: FINALIZE_HELPER as Address, data: finalizeCalldata(t.gnosisSetup as `0x${string}`, sn) });
+      }
       await gnoClient.waitForTransactionReceipt({ hash });
       await fetch('/api/sdai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op: 'finalized', gnosisSafe: t.gnosisSafe }) });
       await refreshTransfers();

@@ -398,3 +398,253 @@ button.cta:disabled, .lev-cta:disabled { opacity:1; }
 .amount-input, .lev-amt { font-size: 30px; font-weight: 600; }
 .swap-divider button, .lev-flip button { width: 34px; height: 34px; border-radius: 11px; }
 button.cta, .lev-cta { height: 52px; padding: 0; }
+
+/* ══════ RWA terminal (full-page tokenized real-world assets) ══════ */
+:root{ --rwa-eq:#004293; --rwa-etf:#6d5bd0; --rwa-gold:#b8860b; --rwa-tsy:#1f9d57;
+  --rwa-gold-soft:rgba(184,134,11,.13); --rwa-etf-soft:rgba(109,91,208,.12); }
+.container.wide{ max-width:1240px; }
+.tnum{ font-variant-numeric:tabular-nums; }
+
+.rwa{ width:100%; }
+.rwa-board{ background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:0 1px 3px rgba(0,35,78,.10),0 10px 34px rgba(0,35,78,.10); }
+.rwa-hd{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:22px 24px 14px; flex-wrap:wrap; }
+.rwa-hd h2{ margin:0; font-size:21px; letter-spacing:-.02em; }
+.rwa-hd p{ margin:5px 0 0; color:var(--muted); font-size:13.5px; max-width:56ch; line-height:1.5; }
+.rwa-mkt{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.rwa-stat{ text-align:right; }
+.rwa-stat .k{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+.rwa-stat .v{ font-size:16px; font-weight:800; }
+.rwa-pill{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; padding:5px 11px; border-radius:999px; background:var(--inset); color:var(--muted); }
+.rwa-pill .led{ width:7px; height:7px; border-radius:50%; background:var(--muted); }
+.rwa-pill.live{ background:rgba(31,157,87,.12); color:var(--good); } .rwa-pill.live .led{ background:var(--good); box-shadow:0 0 0 3px rgba(31,157,87,.15); }
+.rwa-pill.closed .led{ background:var(--warn); }
+
+.rwa-seg{ display:flex; gap:2px; padding:0 24px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.rwa-cat{ position:relative; padding:11px 14px 13px; font-size:13.5px; font-weight:600; color:var(--muted); background:transparent; border:none; cursor:pointer; display:flex; align-items:center; gap:7px; }
+.rwa-cat.on{ color:var(--text); } .rwa-cat.on::after{ content:""; position:absolute; left:8px; right:8px; bottom:-1px; height:2.5px; border-radius:2px; background:var(--accent); }
+.rwa-cat .sw{ width:8px; height:8px; border-radius:2px; }
+.rwa-cat .n{ font-size:11px; color:var(--muted); background:var(--inset); border-radius:999px; padding:1px 7px; font-weight:700; }
+
+.rwa-tools{ display:flex; gap:10px; align-items:center; padding:14px 24px; flex-wrap:wrap; }
+.rwa-search{ flex:1; min-width:220px; display:flex; align-items:center; gap:9px; background:var(--inset); border:1px solid var(--border); border-radius:12px; padding:0 14px; color:#41547a; font-size:14px; }
+.rwa-search input{ flex:1; border:none; background:transparent; outline:none; color:var(--text); font-size:14px; padding:11px 0; width:100%; }
+.rwa-tools select{ width:auto; flex:0 0 auto; font-size:13px; font-weight:600; color:var(--muted); padding:10px 12px; }
+.rwa-chip{ background:var(--inset); border:1px solid var(--border); color:var(--muted); border-radius:11px; padding:10px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+.rwa-chip.on{ background:var(--accent-soft); color:var(--accent); border-color:transparent; }
+
+.rwa-split{ display:grid; grid-template-columns:minmax(0,1fr) 408px; align-items:start; }
+.rwa-split:not(.has-detail){ grid-template-columns:1fr; }
+.rwa-left{ min-width:0; overflow-x:auto; }
+.rwa-right{ position:sticky; top:0; max-height:100vh; overflow-y:auto; border-left:1px solid var(--border); min-width:0; }
+.rwa-split.has-detail .s7{ display:none; }
+
+.rwa-tbl{ width:100%; border-collapse:collapse; font-size:14px; min-width:560px; }
+.rwa-tbl thead th{ text-align:right; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.rwa-tbl thead th.l{ text-align:left; padding-left:24px; }
+.rwa-tbl tbody tr{ cursor:pointer; border-bottom:1px solid var(--border); }
+.rwa-tbl tbody tr:hover{ background:var(--inset); }
+.rwa-tbl tbody tr.sel{ background:var(--accent-soft); }
+.rwa-tbl td{ padding:11px 14px; text-align:right; white-space:nowrap; color:var(--text); }
+.rwa-tbl td.l{ text-align:left; }
+.rwa-tbl td.up{ color:var(--good); } .rwa-tbl td.down{ color:var(--warn); } .rwa-tbl td.flat{ color:var(--muted); }
+/* premium column: above NAV (positive) is costlier for a buyer → warn; a discount → good. Matches the detail rail. */
+.rwa-tbl td.prem-pos{ color:var(--warn); } .rwa-tbl td.prem-neg{ color:var(--good); }
+.rwa-asset{ display:flex; align-items:center; gap:10px; padding-left:8px; position:relative; }
+.rwa-stripe{ position:absolute; left:-8px; top:-11px; bottom:-11px; width:3px; }
+.rwa-star{ background:transparent; border:none; color:#8697ad; font-size:15px; cursor:pointer; padding:0 2px; line-height:1; }
+.rwa-star.on{ color:#e8b31e; }
+.rwa-logo{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; letter-spacing:-.02em; flex:0 0 auto; background:var(--accent-soft); color:var(--accent); }
+.rwa-logo.sm{ width:30px; height:30px; font-size:10px; border-radius:9px; } .rwa-logo.lg{ width:48px; height:48px; font-size:13px; border-radius:12px; }
+.rwa-logo[data-k="gold"]{ background:var(--rwa-gold-soft); color:var(--rwa-gold); }
+.rwa-logo[data-k="etf"]{ background:var(--rwa-etf-soft); color:var(--rwa-etf); }
+.rwa-logo[data-k="treasury"]{ background:rgba(31,157,87,.12); color:var(--rwa-tsy); }
+.rwa-nm{ display:flex; flex-direction:column; min-width:0; }
+.rwa-nm b{ font-weight:700; } .rwa-nm i{ font-style:normal; font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+.rwa-vc{ font-size:12px; color:var(--muted); background:var(--inset); border:1px solid var(--border); border-radius:999px; padding:2px 10px; }
+.rwa-noliq{ color:#8697ad; font-size:12px; }
+
+/* detail rail */
+.rwa-detail{ padding:16px 20px 22px; }
+.rwa-d-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.rwa-badge-k{ font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent); }
+.rwa-badge-k[data-k="gold"]{ background:var(--rwa-gold-soft); color:var(--rwa-gold); }
+.rwa-badge-k[data-k="etf"]{ background:var(--rwa-etf-soft); color:var(--rwa-etf); }
+.rwa-badge-k[data-k="treasury"]{ background:rgba(31,157,87,.12); color:var(--rwa-tsy); }
+.rwa-close{ background:var(--inset); border:none; color:var(--muted); width:28px; height:28px; border-radius:9px; cursor:pointer; font-size:13px; }
+.rwa-d-hd{ display:flex; gap:12px; align-items:center; }
+.rwa-d-tk{ font-size:19px; font-weight:800; letter-spacing:-.02em; }
+.rwa-d-nm{ color:var(--muted); font-size:13px; }
+.rwa-d-price{ font-size:29px; font-weight:800; letter-spacing:-.03em; margin-top:12px; display:flex; align-items:baseline; gap:9px; }
+.rwa-d-price .u{ font-size:12.5px; color:#8697ad; font-weight:600; }
+.rwa-d-spark{ margin:8px 0 2px; }
+.rwa-vhead{ display:flex; justify-content:space-between; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; margin:18px 0 9px; }
+.rwa-ver{ display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:11px 13px; border-radius:13px; border:1px solid var(--border); background:var(--inset); color:var(--text); margin-bottom:7px; cursor:pointer; text-align:left; }
+.rwa-ver:hover{ border-color:var(--accent); } .rwa-ver.on{ background:var(--card); border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.rwa-ver.static{ cursor:default; } .rwa-ver.static:hover{ border-color:var(--border); }
+.rwa-ver .li{ display:flex; align-items:center; gap:9px; min-width:0; }
+.rwa-ver .sym{ font-weight:700; display:flex; align-items:center; gap:7px; } .rwa-ver .iss{ font-size:12px; color:var(--muted); }
+.rwa-ver .rt{ text-align:right; } .rwa-ver .vp{ font-weight:700; } .rwa-ver .vprem{ font-size:12.5px; } .rwa-ver .vprem.up{ color:var(--warn); } .rwa-ver .vprem.down{ color:var(--good); }
+/* Compact version rows so the trade ticket + Buy CTA sit above the fold. */
+.rwa-ver.sm{ padding:8px 12px; margin-bottom:6px; }
+.rwa-ver.sm .iss{ font-size:11px; } .rwa-ver.sm .vp{ font-size:14px; } .rwa-ver.sm .vprem{ font-size:11.5px; }
+.rwa-best{ font-size:10px; font-weight:800; color:var(--good); background:rgba(31,157,87,.12); padding:2px 7px; border-radius:999px; text-transform:uppercase; letter-spacing:.03em; }
+.rwa-callout{ background:var(--accent-soft); border:1px solid rgba(0,66,147,.18); border-radius:12px; padding:11px 13px; font-size:13px; margin:10px 0 4px; line-height:1.5; }
+.rwa-callout.gold{ background:var(--rwa-gold-soft); border-color:rgba(184,134,11,.25); } .rwa-callout b{ color:var(--accent); } .rwa-callout.gold b{ color:var(--rwa-gold); }
+
+/* trade ticket */
+.rwa-ticket{ margin-top:16px; border-top:1px solid var(--border); padding-top:16px; }
+.rwa-side{ display:flex; gap:6px; background:var(--inset); border-radius:12px; padding:4px; margin-bottom:11px; }
+.rwa-side button{ flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:14px; font-weight:700; color:var(--muted); background:transparent; border:none; cursor:pointer; }
+.rwa-side button.on{ background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,35,78,.14); }
+.rwa-fld{ background:var(--inset); border:1px solid var(--border); border-radius:14px; padding:12px 15px; margin-bottom:8px; }
+.rwa-fld .lab{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:7px; }
+.rwa-fld .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.rwa-fld .amt{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--text); font-size:25px; font-weight:700; width:100%; padding:0; }
+.rwa-fld .amt::placeholder{ color:#41547a; } .rwa-fld .amt:disabled{ color:var(--text); }
+.rwa-fld .pill{ background:var(--card); border:1px solid var(--border); border-radius:11px; padding:8px 13px; font-weight:700; font-size:14px; flex:0 0 auto; }
+.mx{ background:var(--accent-soft); color:var(--accent); border:none; border-radius:7px; padding:1px 7px; font-size:11px; font-weight:700; cursor:pointer; margin-left:7px; }
+.rwa-slip{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0 4px; }
+.rwa-slip label{ font-size:12px; color:var(--muted); } .rwa-slip input{ width:90px; text-align:right; font-size:14px; padding:8px 10px; }
+
+/* Collapsed disclosures — "Price details" (in the ticket) and "How pricing works". */
+.rwa-details{ margin-top:12px; } .rwa-disc{ margin-top:14px; border-top:1px solid var(--border); padding-top:6px; }
+.rwa-details > summary, .rwa-disc > summary{ cursor:pointer; list-style:none; font-size:12.5px; font-weight:600; color:var(--muted); padding:7px 0; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.rwa-details > summary::-webkit-details-marker, .rwa-disc > summary::-webkit-details-marker{ display:none; }
+.rwa-details > summary::before, .rwa-disc > summary::before{ content:'▸'; font-size:10px; color:var(--muted); transition:transform .15s; }
+.rwa-details[open] > summary::before, .rwa-disc[open] > summary::before{ transform:rotate(90deg); }
+.rwa-details > summary:hover, .rwa-disc > summary:hover{ color:var(--text); }
+.rwa-details summary b{ color:var(--text); font-weight:700; } .rwa-details summary .mut{ color:var(--faint,#8697ad); font-weight:400; }
+.rwa-details summary .g{ color:var(--good); } .rwa-details summary .r{ color:var(--warn); }
+.rwa-disc p{ font-size:11.5px; color:var(--faint,#8697ad); line-height:1.5; margin:4px 2px 8px; }
+.rwa-disc p b{ color:var(--muted); font-weight:600; }
+.rwa-cta{ width:100%; background:var(--accent); color:#fff; border:none; border-radius:15px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; margin-top:4px; }
+.rwa-cta:disabled{ background:var(--inset-2); color:var(--muted); cursor:not-allowed; }
+.rwa-foot{ font-size:12px; color:var(--muted); line-height:1.5; padding:16px 24px 20px; margin:0; border-top:1px solid var(--border); }
+
+@media(max-width:920px){
+  .rwa-split.has-detail{ grid-template-columns:1fr; } .rwa-split.has-detail .rwa-left{ display:none; }
+  .rwa-right{ position:static; border-left:none; }
+}
+@media(max-width:560px){ .rwa-tbl .s7, .rwa-tbl .bo{ display:none; } }
+
+/* extended-hours breakdown + market status + effective-price + counter-asset */
+.rwa-d-sub{ display:flex; flex-direction:column; gap:2px; margin-top:7px; font-size:12.5px; color:var(--muted); }
+.rwa-d-sub i{ font-style:normal; color:var(--faint,#8697ad); }
+.rwa-d-sub b{ font-weight:700; } .rwa-d-sub .g{ color:var(--good); } .rwa-d-sub .r{ color:var(--warn); }
+.rwa-status{ display:inline-flex; align-items:center; gap:7px; margin-top:10px; font-size:12px; font-weight:600; padding:5px 11px; border-radius:999px; background:var(--inset); color:var(--muted); }
+.rwa-status .led{ width:7px; height:7px; border-radius:50%; background:var(--muted); }
+.rwa-status.live{ background:rgba(31,157,87,.12); color:var(--good); } .rwa-status.live .led{ background:var(--good); box-shadow:0 0 0 3px rgba(31,157,87,.15); }
+.rwa-status.ext{ background:var(--rwa-gold-soft); color:var(--rwa-gold); } .rwa-status.ext .led{ background:var(--rwa-gold); }
+.rwa-status.closed .led{ background:var(--warn); }
+.rwa-ver .vprem2{ font-size:11px; color:var(--faint,#8697ad); margin-top:1px; }
+
+.rwa-eff{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:var(--inset); border:1px solid var(--border); border-radius:12px; padding:9px 13px; margin:2px 0 8px; font-size:12.5px; color:var(--muted); }
+.rwa-eff b{ color:var(--text); } .rwa-eff em{ font-style:normal; font-weight:600; } .rwa-eff em.g{ color:var(--good); } .rwa-eff em.r{ color:var(--warn); } .rwa-eff em.mut{ color:var(--faint,#8697ad); font-weight:500; }
+.rwa-eff-tok{ color:var(--faint,#8697ad); font-weight:600; }
+.rwa-fee{ font-size:11.5px; color:var(--muted); margin:-4px 2px 8px; line-height:1.45; }
+.rwa-fee b{ color:var(--text); } .rwa-fee .mut{ color:var(--faint,#8697ad); }
+.rwa-info{ width:16px; height:16px; margin-left:5px; padding:0; border:1px solid var(--border); border-radius:50%; background:var(--card); color:var(--muted); font:600 10px/1 ui-serif,Georgia,serif; font-style:italic; cursor:pointer; vertical-align:middle; }
+.rwa-info:hover{ color:var(--text); border-color:var(--muted); }
+.rwa-mult-note{ font-size:11.5px; color:var(--faint,#8697ad); line-height:1.5; margin:-4px 2px 8px; background:var(--inset); border:1px solid var(--border); border-radius:10px; padding:8px 11px; }
+.rwa-mult-note b{ color:var(--text); font-weight:600; }
+
+.rwa-counter{ width:auto; flex:0 0 auto; background:var(--card); border:1px solid var(--border); border-radius:11px; padding:8px 10px; font-weight:700; font-size:14px; color:var(--text); cursor:pointer; }
+.rwa-basis{ font-size:11.5px; color:var(--faint,#8697ad); margin:8px 2px 0; line-height:1.45; }
+
+/* ── CoW Swap deep-link + full-screen asset view + chart ── */
+.rwa-cow-link{ display:block; text-align:center; margin-top:8px; padding:11px; border-radius:13px; border:1px solid var(--border); background:var(--inset); color:var(--accent); font-size:13.5px; font-weight:700; text-decoration:none; }
+.rwa-cow-link:hover{ background:var(--accent-soft); border-color:transparent; text-decoration:none; }
+
+.rwa-back{ display:inline-block; color:var(--accent); font-size:13.5px; font-weight:600; margin-bottom:14px; }
+.asset-view{ width:100%; }
+.asset-view-hd{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.asset-view-tk{ font-size:24px; font-weight:800; letter-spacing:-.02em; display:flex; align-items:baseline; gap:10px; }
+.asset-view-tk span{ font-size:14px; font-weight:500; color:var(--muted); }
+.asset-issuers{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.iss-cat{ font-size:10.5px; font-weight:800; letter-spacing:.05em; padding:3px 9px; border-radius:999px; background:var(--accent-soft); color:var(--accent); }
+.iss-cat[data-k="gold"]{ background:var(--rwa-gold-soft); color:var(--rwa-gold); }
+.iss-cat[data-k="etf"]{ background:var(--rwa-etf-soft); color:var(--rwa-etf); }
+.iss-cat[data-k="treasury"]{ background:rgba(31,157,87,.12); color:var(--rwa-tsy); }
+.iss-chip{ font-size:12px; font-weight:600; color:var(--muted); background:var(--inset); border:1px solid var(--border); border-radius:999px; padding:3px 10px; }
+
+.asset-view-grid{ display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:18px; align-items:start; }
+.asset-view-left{ min-width:0; background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:0 1px 3px rgba(0,35,78,.08); padding:18px 20px; }
+.asset-view-right{ min-width:0; background:var(--card); border:1px solid var(--border); border-radius:20px; box-shadow:0 1px 3px rgba(0,35,78,.08); padding:6px 6px 6px; position:sticky; top:16px; }
+.asset-exchange-hd{ font-size:17px; font-weight:800; letter-spacing:-.01em; padding:14px 16px 4px; }
+.asset-view-right .rwa-detail{ padding:10px 16px 18px; }
+
+.asset-price-row{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+.asset-price{ font-size:34px; font-weight:800; letter-spacing:-.03em; }
+.asset-change{ font-size:15px; font-weight:700; } .asset-change.up{ color:var(--good); } .asset-change.down{ color:var(--warn); }
+.asset-cagr{ opacity:.7; font-weight:600; }
+.asset-ext{ font-size:12.5px; color:var(--muted); }
+.asset-nav-tag{ font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:7px; padding:2px 8px; margin-left:10px; vertical-align:middle; letter-spacing:.02em; }
+
+.asset-chart{ margin-top:4px; }
+.asset-chart-tabs{ display:flex; gap:4px; justify-content:flex-end; margin-bottom:8px; }
+.asset-chart-tabs button{ background:var(--inset); border:1px solid var(--border); color:var(--muted); border-radius:9px; padding:6px 13px; font-size:13px; font-weight:700; cursor:pointer; }
+.asset-chart-tabs button.on{ background:var(--accent-soft); color:var(--accent); border-color:transparent; }
+.asset-chart-box{ width:100%; position:relative; }
+.asset-chart-empty{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:13px; height:100%; }
+
+/* Stats strip under the chart */
+.asset-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1px; margin-top:16px; background:var(--border); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.asset-stats .stat{ background:var(--card); padding:11px 13px; }
+.asset-stats .k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+.asset-stats .v{ font-size:14.5px; font-weight:700; color:var(--text); }
+
+/* Official xStocks metadata */
+.asset-xmeta{ margin-top:16px; padding:12px 14px; border:1px solid var(--border); border-radius:14px; background:var(--inset); }
+.asset-xmeta h4{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:0 0 6px; font-weight:700; display:flex; justify-content:space-between; align-items:baseline; }
+.asset-xmeta h4 a{ font-size:11px; color:var(--accent); text-transform:none; letter-spacing:0; text-decoration:none; font-weight:600; }
+.xmeta-about{ position:relative; max-height:74px; overflow:hidden; }
+.xmeta-about.open{ max-height:none; }
+.xmeta-about:not(.open)::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:34px; background:linear-gradient(to bottom, transparent, var(--inset)); pointer-events:none; }
+.xmeta-desc{ font-size:13px; color:var(--text); margin:0 0 8px; line-height:1.5; }
+.xmeta-h{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:8px 0 4px; }
+.xmeta-h:first-child{ margin-top:0; }
+.xmeta-more{ background:none; border:none; color:var(--accent); font-size:12px; font-weight:600; cursor:pointer; padding:2px 0 8px; }
+.xmeta-facts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.xmeta-fact{ font-size:11.5px; color:var(--muted); background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px 9px; }
+.xmeta-fact b{ color:var(--faint,#8697ad); font-weight:600; margin-right:3px; }
+.xmeta-fact.ok{ color:var(--good); border-color:color-mix(in srgb,var(--good) 30%,var(--border)); }
+.xmeta-fact.halt{ color:var(--warn); border-color:color-mix(in srgb,var(--warn) 35%,var(--border)); }
+
+/* On-chain contracts list */
+.asset-contracts{ margin-top:16px; }
+.asset-contracts h4{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:0 0 8px; font-weight:700; }
+.asset-contracts .contract{ display:flex; align-items:center; gap:9px; padding:8px 11px; border:1px solid var(--border); border-radius:11px; margin-bottom:6px; background:var(--inset); }
+.asset-contracts .c-sym{ font-weight:700; font-size:13px; color:var(--text); flex:0 0 auto; min-width:62px; }
+.asset-contracts .c-iss{ font-size:11.5px; color:var(--muted); flex:1 1 auto; }
+.asset-contracts .c-addr{ font-size:12px; color:var(--faint,#8697ad); }
+.asset-contracts .c-ic{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; padding:0; border:1px solid var(--border); border-radius:8px; background:var(--card); color:var(--muted); font-size:13px; text-decoration:none; cursor:pointer; flex:0 0 auto; }
+.asset-contracts .c-ic:hover{ color:var(--accent); border-color:var(--accent); }
+
+@media(max-width:900px){ .asset-view-grid{ grid-template-columns:1fr; } .asset-view-right{ position:static; } }
+@media(max-width:520px){ .asset-contracts .c-iss{ display:none; } }
+.rwa-tbl thead th.sortable{ cursor:pointer; user-select:none; white-space:nowrap; }
+.rwa-tbl thead th.sortable:hover{ color:var(--text); }
+.rwa-perf-sel{ font:inherit; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:inherit; background:var(--inset); border:1px solid var(--border); border-radius:7px; padding:2px 4px; cursor:pointer; }
+.rwa-perf-sel:hover{ border-color:var(--accent); color:var(--text); }
+.rwa-tbl thead th.sorted{ color:var(--accent); }
+
+/* ── RWA network switcher (Ethereum live + others "coming soon") ── */
+.net-switch{ position:relative; }
+.net-btn{ display:flex; align-items:center; gap:7px; background:var(--card); border:1px solid var(--border); color:var(--text); border-radius:11px; padding:9px 12px; font-size:13.5px; font-weight:600; cursor:pointer; box-shadow:0 1px 3px rgba(0,35,78,.10); }
+.net-dot{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+.net-chev{ color:var(--muted); font-size:11px; }
+.net-menu{ position:absolute; right:0; top:calc(100% + 6px); z-index:40; background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 34px rgba(0,35,78,.18); padding:6px; min-width:248px; }
+.net-item{ display:flex; align-items:center; gap:9px; width:100%; padding:9px 11px; border-radius:10px; font-size:13.5px; font-weight:600; color:var(--text); background:transparent; border:none; text-align:left; cursor:pointer; }
+.net-item.on:hover{ background:var(--inset); }
+.net-item.soon{ color:var(--muted); cursor:default; }
+.net-live{ margin-left:auto; white-space:nowrap; font-size:10.5px; font-weight:800; color:var(--good); background:rgba(31,157,87,.12); padding:2px 8px; border-radius:999px; }
+.net-soon{ margin-left:auto; white-space:nowrap; font-size:10.5px; font-weight:700; color:var(--muted); background:var(--inset); padding:2px 8px; border-radius:999px; }
+.rwa-more{ display:flex; justify-content:center; padding:14px; border-top:1px solid var(--border); }
+.rwa-more button{ background:var(--inset); border:1px solid var(--border); color:var(--accent); border-radius:11px; padding:10px 18px; font-size:13.5px; font-weight:700; cursor:pointer; }
+.rwa-more button:hover{ background:var(--accent-soft); border-color:transparent; }
+.asset-chart-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+.asset-chart-mode{ display:flex; gap:2px; background:var(--inset); border:1px solid var(--border); border-radius:10px; padding:3px; }
+.asset-chart-mode button{ background:transparent; border:none; color:var(--muted); border-radius:7px; padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer; }
+.asset-chart-mode button.on{ background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,35,78,.14); }
+.asset-chart-note{ font-size:11.5px; color:var(--faint,#8697ad); margin:8px 2px 0; line-height:1.45; }
+.rwa-d-sub em{ font-style:normal; font-weight:500; color:var(--faint,#8697ad); }

@@ -9,6 +9,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { TokenPicker } from '../components/TokenPicker';
 import { SwapTab } from '../components/SwapTab';
 import { SdaiTab } from '../components/SdaiTab';
+import { StocksTab } from '../components/StocksTab';
 import { DurationPicker } from '../components/DurationPicker';
 import { erc20Abi } from '../lib/abi';
 import { getChainConfig } from '../lib/chains';
@@ -69,7 +70,7 @@ function Info({ text, wide }: { text: string; wide?: boolean }) {
   return <span className={`info${wide ? ' wide' : ''}`} data-tip={text} tabIndex={0} role="img" aria-label={text}>ⓘ</span>;
 }
 
-type Tab = 'swap' | 'limit' | 'twap' | 'sdai';
+type Tab = 'swap' | 'limit' | 'twap' | 'sdai' | 'stocks';
 
 /** Shared tab row — rendered inside each tab's own widget so styling stays native. */
 function Tabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
@@ -79,6 +80,7 @@ function Tabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
       <button className="tab" disabled title="Coming soon">Limit</button>
       <button className={`tab ${tab === 'twap' ? 'active' : ''}`} onClick={() => setTab('twap')}>TWAP</button>
       <button className={`tab ${tab === 'sdai' ? 'active' : ''}`} onClick={() => setTab('sdai')}>sDAI ↗</button>
+      <button className={`tab ${tab === 'stocks' ? 'active' : ''}`} onClick={() => setTab('stocks')}>RWA</button>
     </div>
   );
 }
@@ -104,7 +106,7 @@ export default function Page() {
   const ordersHref = view ? `/orders?view=${view}` : '/orders';
 
   return (
-    <div className="container">
+    <div className={`container ${tab === 'stocks' ? 'wide' : ''}`}>
       <div className="topbar">
         <div className="brand"><h1>🐮 Cowswap Pro</h1></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -117,6 +119,8 @@ export default function Page() {
         <SwapTab tabs={<Tabs tab={tab} setTab={setTab} />} viewOwner={view ?? undefined} initialPosition={pos ?? undefined} shared={shared} onShared={setShared} />
       ) : tab === 'sdai' ? (
         <SdaiTab tabs={<Tabs tab={tab} setTab={setTab} />} />
+      ) : tab === 'stocks' ? (
+        <StocksTab tabs={<Tabs tab={tab} setTab={setTab} />} />
       ) : isConnected && !chain ? (
         <div className="widget center"><p className="errors">Unsupported network — switch to Ethereum or Gnosis.</p></div>
       ) : (

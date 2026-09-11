@@ -4,7 +4,7 @@ import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } fro
 import { gnosis, mainnet } from 'wagmi/chains';
 import { shortAddress } from '../lib/format';
 
-export function ConnectButton() {
+export function ConnectButton({ hideChainSwitcher }: { hideChainSwitcher?: boolean } = {}) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -22,14 +22,17 @@ export function ConnectButton() {
 
   return (
     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-      <select
-        value={chainId}
-        onChange={(e) => switchChain({ chainId: Number(e.target.value) as typeof mainnet.id | typeof gnosis.id })}
-        style={{ width: 'auto' }}
-      >
-        <option value={mainnet.id}>Ethereum</option>
-        <option value={gnosis.id}>Gnosis</option>
-      </select>
+      {/* On the RWA site a curated Ethereum-only switcher is shown separately. */}
+      {!hideChainSwitcher && (
+        <select
+          value={chainId}
+          onChange={(e) => switchChain({ chainId: Number(e.target.value) as typeof mainnet.id | typeof gnosis.id })}
+          style={{ width: 'auto' }}
+        >
+          <option value={mainnet.id}>Ethereum</option>
+          <option value={gnosis.id}>Gnosis</option>
+        </select>
+      )}
       <button className="ghost" onClick={() => disconnect()}>
         {shortAddress(address)}
       </button>

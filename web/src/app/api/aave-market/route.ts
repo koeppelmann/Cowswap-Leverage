@@ -3,6 +3,7 @@ import { createPublicClient, fallback, http, type Address } from 'viem';
 import { gnosis } from 'viem/chains';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Aave V3 Gnosis market snapshot for the leverage UI: per-reserve flags that decide which
 // (sell → buy) pairs can be levered (borrow sell against buy), plus eMode categories.

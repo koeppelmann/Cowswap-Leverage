@@ -6,6 +6,17 @@ const COW_NETWORK: Record<number, string> = {
   100: 'xdai',
 };
 
+// Short-lived cache + in-flight de-dupe of identical quote requests. Quoting many
+// token versions (the overview grid, a detail page's versions) bursts the CoW
+// quote API and trips its rate limit (429). Indicative prices tolerate a few
+// seconds of staleness, and a request keyed on exact amount/tokens/appData is
+// safe to share, so collapsing duplicates within the window cuts upstream load
+// without changing what any single quote returns.
+type QuoteResult = { sellAmount: string; buyAmount: string; feeAmount: string };
+const CACHE_TTL = 60_000;
+const qCache = new Map<string, { at: number; data: QuoteResult }>();
+const qFlight = new Map<string, Promise<QuoteResult>>();
+
 // Server-side proxy to CoW's quote API: avoids browser CORS and keeps the
 // eip1271 request shape in one place.
 export async function POST(req: Request) {
@@ -31,7 +42,20 @@ export async function POST(req: Request) {
   }
 
   const { url, headers } = cowBase(network);
-  try {
+  const appDataStr = appData ?? '{}';
+  const key = `${network}|${sellToken}|${buyToken}|${from}|${sellAmount}|${appDataStr}`;
+
+  const hit = qCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return NextResponse.json(hit.data);
+
+  // A concurrent identical quote is in flight — await it instead of firing another.
+  const running = qFlight.get(key);
+  if (running) {
+    try { return NextResponse.json(await running); }
+    catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: (e as { status?: number }).status ?? 502 }); }
+  }
+
+  const task = (async (): Promise<QuoteResult> => {
     const r = await fetch(`${url}/api/v1/quote`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...headers },
@@ -46,25 +70,30 @@ export async function POST(req: Request) {
         onchainOrder: false,
         // Passing the full appData (with post-hooks) makes CoW price the hook gas
         // into feeAmount/buyAmount — essential for hook orders to be fillable.
-        appData: appData ?? '{}',
+        appData: appDataStr,
       }),
-      // CoW quotes are short-lived; never cache.
       cache: 'no-store',
     });
     const data = await r.json();
     if (!r.ok) {
-      return NextResponse.json(
-        { error: data?.description || data?.errorType || 'quote failed' },
-        { status: r.status },
-      );
+      const err = new Error(data?.description || data?.errorType || 'quote failed') as Error & { status?: number };
+      err.status = r.status;
+      throw err;
     }
     const q = data.quote ?? {};
-    return NextResponse.json({
-      sellAmount: q.sellAmount as string,
-      buyAmount: q.buyAmount as string,
-      feeAmount: q.feeAmount as string,
-    });
+    return { sellAmount: q.sellAmount as string, buyAmount: q.buyAmount as string, feeAmount: q.feeAmount as string };
+  })();
+  qFlight.set(key, task);
+
+  try {
+    const data = await task;
+    if (qCache.size > 500) qCache.delete(qCache.keys().next().value as string);
+    qCache.set(key, { at: Date.now(), data });
+    return NextResponse.json(data);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+    // Don't cache failures (incl. 429) — the next call retries immediately.
+    return NextResponse.json({ error: (e as Error).message }, { status: (e as { status?: number }).status ?? 502 });
+  } finally {
+    qFlight.delete(key);
   }
 }

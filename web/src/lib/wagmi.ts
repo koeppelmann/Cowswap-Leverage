@@ -8,7 +8,10 @@ import { injected } from 'wagmi/connectors';
 // For prod, put a paid RPC first via NEXT_PUBLIC_*_RPC.
 // Lead with the official general public Gnosis RPC (drpc/gateway were returning 400s in-browser).
 const gnosisRpcs = [process.env.NEXT_PUBLIC_GNOSIS_RPC, 'https://rpc.gnosischain.com', 'https://gnosis-rpc.publicnode.com', 'https://gnosis.drpc.org'].filter(Boolean) as string[];
-const mainnetRpcs = [process.env.NEXT_PUBLIC_MAINNET_RPC, 'https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org'].filter(Boolean) as string[];
+// Lead with Cloudflare's endpoint — widely reachable with proper browser CORS.
+// publicnode was TLS-failing (ERR_SSL_PROTOCOL_ERROR) in some browsers/networks, so
+// it's demoted to a last-resort fallback rather than the lead transport.
+const mainnetRpcs = [process.env.NEXT_PUBLIC_MAINNET_RPC, 'https://cloudflare-eth.com', 'https://eth.drpc.org', 'https://ethereum-rpc.publicnode.com'].filter(Boolean) as string[];
 
 export const wagmiConfig = createConfig({
   chains: [mainnet, gnosis],
